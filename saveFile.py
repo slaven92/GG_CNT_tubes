@@ -2,7 +2,7 @@ from time import time, sleep
 import matplotlib.pyplot as plt
 import random
 import numpy as np
-
+import pyvisa
 
 ## variables
 variables = dict(
@@ -10,20 +10,62 @@ variables = dict(
 )
 ## spectrum settings
 settings = dict(
-    NUM_OF_POINTS = 10,
+    INIT = False,
+    # NUM_OF_POINTS = 10,
     START_FREQ = 50E3,
     STOP_FREQ = 120E3,
     BW = 1,
 )
 
-## signal generator simulator
-def get_spectrum():
-    return np.random.uniform(0, 1, (settings["NUM_OF_POINTS"], 1))
+
+rm = pyvisa.ResourceManager()
+inst = rm.open_resource(rm.list_resources()[0])
+
+## signal generator
+def get_spectrum(square = True ,trace='1'):
+    inst.write(':TRAC:DATA? TRACE' + trace)
+    data = inst.read()
+    spectrum = np.array(data.split(','),dtype=float)
+    if square:
+        return spectrum*spectrum/get_bw()
+    return spectrum.reshape(-1,1)
+
 def get_x_axis():
-    return np.linspace(settings["START_FREQ"], settings["STOP_FREQ"], settings["NUM_OF_POINTS"]).reshape(-1,1)
+    start_freq=get_start_freq()
+    stop_freq=get_stop_freq()
+    nb_points=get_nb_points()
+    return np.linspace(start_freq,stop_freq,nb_points).reshape(-1,1)
+    # return np.linspace(settings["START_FREQ"], settings["STOP_FREQ"], settings["NUM_OF_POINTS"]).reshape(-1,1)
+
+def get_start_freq():
+    inst.write(':FREQuency:STARt?')
+    start_freq=inst.read()
+    start_freq = float(start_freq)
+    return start_freq
+
+def get_stop_freq():
+    inst.write(':FREQuency:STOP?')
+    stop_freq=inst.read()
+    stop_freq=float(stop_freq)
+    return stop_freq
+
+def get_nb_points():
+    inst.write(':SWEep:POINts?')
+    nb_points=inst.read()
+    nb_points=float(nb_points)
+    return nb_points
+
+def get_bw():
+    inst.write(':BAND?')
+    bwidth=inst.read()
+    return float(bwidth)
 
 
 ## initial setup of signal analyser TODO
+if settings["INIT"]:
+    inst.write(':FREQuency:START '+str(settings["START_FREQ"])+'Hz')
+    inst.write(':FREQuency:STOP '+str(settings["STOP_FREQ"])+'Hz')
+    inst.write(':BAND '+ str(settings["BW"])+'Hz')
 
 
 ## save spectrum
