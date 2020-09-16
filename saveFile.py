@@ -6,7 +6,7 @@ import pyvisa
 
 ## variables
 variables = dict(
-    BASE = "./data/",
+    BASE = "C:/Users/NOM/Documents/sem/GG_CNT_tubes/data/",
 )
 ## spectrum settings
 settings = dict(
@@ -19,7 +19,9 @@ settings = dict(
 
 
 rm = pyvisa.ResourceManager()
-inst = rm.open_resource(rm.list_resources()[0])
+addr = rm.list_resources()
+print(addr)
+inst = rm.open_resource("USB0::0x0957::0x0A0B::MY48010776::INSTR")
 
 ## signal generator
 def get_spectrum(square = True ,trace='1'):
@@ -27,14 +29,15 @@ def get_spectrum(square = True ,trace='1'):
     data = inst.read()
     spectrum = np.array(data.split(','),dtype=float)
     if square:
-        return spectrum*spectrum/get_bw()
+        out = spectrum*spectrum/get_bw()
+        return out.reshape(-1,1)
     return spectrum.reshape(-1,1)
 
 def get_x_axis():
     start_freq=get_start_freq()
     stop_freq=get_stop_freq()
     nb_points=get_nb_points()
-    return np.linspace(start_freq,stop_freq,nb_points).reshape(-1,1)
+    return np.linspace(start_freq,stop_freq,int(nb_points)).reshape(-1,1)
     # return np.linspace(settings["START_FREQ"], settings["STOP_FREQ"], settings["NUM_OF_POINTS"]).reshape(-1,1)
 
 def get_start_freq():
@@ -86,4 +89,4 @@ def save_spectrum(filename = "singleSpectrum" + str(time()), doPlot = True):
 
 
 if __name__ == '__main__':
-    save_spectrum()
+    save_spectrum(filename="TEM_B_tube1_tip")

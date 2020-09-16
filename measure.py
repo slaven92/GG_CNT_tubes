@@ -14,22 +14,24 @@ import pyvisa
 ## variables
 variables = dict(
     TIMEOUT = 10, # in s
-    TRESHOLD = 0.8, # in dbs or v
-    BASE = "./data/",
+    TRESHOLD = 5e-12, # in dbs or v
+    BASE = "C:/Users/NOM/Documents/sem/GG_CNT_tubes/data/",
 )
 ## spectrum settings
 settings = dict(
     INIT = False,
-    # NUM_OF_POINTS = 10,
-    START_FREQ = 10E3,
+    NUM_OF_POINTS = 1001,
+    START_FREQ = 80e3,
     STOP_FREQ = 500E3,
-    GOAL_FREQ = 20E3,
+    GOAL_FREQ = 80e3,
     BW = 1,
 )
 
 ## signal generator simulator
 rm = pyvisa.ResourceManager()
-inst = rm.open_resource(rm.list_resources()[0])
+addr = rm.list_resources()
+print(addr)
+inst = rm.open_resource("USB0::0x0957::0x0A0B::MY48010776::INSTR")
 
 ## signal generator
 def get_spectrum(square = True ,trace='1'):
@@ -37,14 +39,15 @@ def get_spectrum(square = True ,trace='1'):
     data = inst.read()
     spectrum = np.array(data.split(','),dtype=float)
     if square:
-        return spectrum*spectrum/get_bw()
+        out = spectrum*spectrum/get_bw()
+        return out.reshape(-1,1)
     return spectrum.reshape(-1,1)
 
 def get_x_axis():
     start_freq=get_start_freq()
     stop_freq=get_stop_freq()
     nb_points=get_nb_points()
-    return np.linspace(start_freq,stop_freq,nb_points).reshape(-1,1)
+    return np.linspace(start_freq,stop_freq,int(nb_points)).reshape(-1,1)
     # return np.linspace(settings["START_FREQ"], settings["STOP_FREQ"], settings["NUM_OF_POINTS"]).reshape(-1,1)
 
 def get_start_freq():
@@ -134,7 +137,7 @@ class App(QtGui.QMainWindow):
     def run_loop(self):
 
         y_vector = get_spectrum()
-        sleep(1)
+        sleep(0.5)
         th = np.median(y_vector)
 
         print(th)
@@ -171,4 +174,4 @@ if __name__ == '__main__':
     thisapp.show()
     # sys.exit(app.exec_())
     app.exec_()
-    # thisapp.save_data()
+    thisapp.save_data()
