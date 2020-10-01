@@ -20,7 +20,7 @@ settings = dict(
 
 rm = pyvisa.ResourceManager()
 addr = rm.list_resources()
-print(addr)
+# print(addr)
 inst = rm.open_resource("USB0::0x0957::0x0A0B::MY48010776::INSTR")
 
 ## signal generator
@@ -83,10 +83,11 @@ def save_spectrum(filename = "singleSpectrum" + str(time()), doPlot = True):
         plt.yscale("log")
         plt.plot(x_vector, y_vector)
         plt.xlabel("frequency [Hz]")
-        plt.ylabel("signal [V]")
+        plt.ylabel("signal [V^2/Hz]")
         plt.savefig(variables["BASE"] + filename + ".png")
+        rm.close()
         plt.show()
 
 
 if __name__ == '__main__':
-    save_spectrum(filename="TEM_B_tube1_tip")
+    save_spectrum(filename="N3_tube1_after")

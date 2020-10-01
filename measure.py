@@ -11,27 +11,14 @@ import pyqtgraph.exporters
 import pyvisa
 
 
-## variables
-variables = dict(
-    TIMEOUT = 10, # in s
-    TRESHOLD = 5e-12, # in dbs or v
-    BASE = "C:/Users/NOM/Documents/sem/GG_CNT_tubes/data/",
-)
-## spectrum settings
-settings = dict(
-    INIT = False,
-    NUM_OF_POINTS = 1001,
-    START_FREQ = 80e3,
-    STOP_FREQ = 500E3,
-    GOAL_FREQ = 80e3,
-    BW = 1,
-)
+
 
 ## signal generator simulator
 rm = pyvisa.ResourceManager()
 addr = rm.list_resources()
 print(addr)
 inst = rm.open_resource("USB0::0x0957::0x0A0B::MY48010776::INSTR")
+
 
 ## signal generator
 def get_spectrum(square = True ,trace='1'):
@@ -73,11 +60,35 @@ def get_bw():
     bwidth=inst.read()
     return float(bwidth)
 
+
+
+
+
+
+## variables
+variables = dict(
+    TIMEOUT = 10, # in s
+    TRESHOLD = 2e-12, # in dbs or v
+    BASE = "C:/Users/NOM/Documents/sem/GG_CNT_tubes/data/",
+)
+## spectrum settings
+settings = dict(
+    INIT = False,
+    NUM_OF_POINTS = 1001,
+    START_FREQ = get_start_freq(),
+    STOP_FREQ = get_stop_freq(),
+    GOAL_FREQ = 25e3,
+    FILENAME = "N3_tube1_H20_anneal2",
+    BW = 1,
+)
+
+
 ## initial setup of signal analyser TODO
 if settings["INIT"]:
     inst.write(':FREQuency:START '+str(settings["START_FREQ"])+'Hz')
     inst.write(':FREQuency:STOP '+str(settings["STOP_FREQ"])+'Hz')
     inst.write(':BAND '+ str(settings["BW"])+'Hz')
+
 
 
 class App(QtGui.QMainWindow):
@@ -102,9 +113,10 @@ class App(QtGui.QMainWindow):
         self.y = get_x_axis()
     
 
-        self.pen = pg.mkPen({'color': "F00", "width": 3})
+        self.pen = pg.mkPen({'color': "F00", "width": 1})
         self.pi.addLine(y=settings["GOAL_FREQ"], pen=self.pen)
         self.pi.addLine(y=settings["GOAL_FREQ"]*2, pen=self.pen)
+        self.pi.addLine(y=settings["GOAL_FREQ"]*3, pen=self.pen)
 
         self.t0 = time()
         self.t_timeout = time()
@@ -174,4 +186,5 @@ if __name__ == '__main__':
     thisapp.show()
     # sys.exit(app.exec_())
     app.exec_()
-    thisapp.save_data()
+    rm.close()
+    thisapp.save_data(filename=settings["FILENAME"])
